@@ -23,6 +23,7 @@
  */
 package org.jetbrains.projector.server.core
 
+import org.jetbrains.projector.common.protocol.toClient.ClientAddress
 import org.jetbrains.projector.common.protocol.toClient.MainWindow
 import org.jetbrains.projector.common.protocol.toClient.toJson
 import org.jetbrains.projector.server.core.util.GetRequestResult
@@ -85,6 +86,46 @@ public abstract class ProjectorHttpWsServer(port: Int) : HttpWsServer(port) {
       )
     }
 
+    if (pathWithoutParams == "/clientList") {
+      return GetRequestResult(
+        statusCode = 200,
+        statusText = "OK",
+        contentType = "text/json",
+        content = getClientList().toJson().toByteArray(),
+      )
+    }
+
+    if (pathWithoutParams == "/disconnectAll") {
+      return GetRequestResult(
+        statusCode = 200,
+        statusText = "OK",
+        contentType = "text/html",
+        content = disconnectAll().toByteArray(),
+      )
+    }
+
+    if (pathWithoutParams == "/disconnectByIp") {
+      Regex("""^/disconnectByIp\?ip="""
+            + """([01]?\d\d?|2[0-4]\d|25[0-5])\."""
+            + """([01]?\d\d?|2[0-4]\d|25[0-5])\."""
+            + """([01]?\d\d?|2[0-4]\d|25[0-5])\."""
+            + """([01]?\d\d?|2[0-4]\d|25[0-5])$""").matchEntire(path)?.value
+      ?: return GetRequestResult(
+        statusCode = 422,
+        statusText = "Unprocessable Entity",
+        contentType = "text/html",
+        content = "<h1>422 Invalid IP-address</h1>".toByteArray(),
+      )
+
+      val ip = path.substringAfter('=')
+      return GetRequestResult(
+        statusCode = 200,
+        statusText = "OK",
+        contentType = "text/html",
+        content = disconnectByIp(ip).toByteArray(),
+      )
+    }
+
     val resourceFileName = getResourceName(pathWithoutParams)
     val resourceBytes = getResource(resourceFileName)
 
@@ -106,4 +147,10 @@ public abstract class ProjectorHttpWsServer(port: Int) : HttpWsServer(port) {
   }
 
   public abstract fun getMainWindows(): List<MainWindow>
+
+  public abstract fun getClientList(): List<ClientAddress>
+
+  public abstract fun disconnectAll(): String
+
+  public abstract fun disconnectByIp(ip: String): String
 }

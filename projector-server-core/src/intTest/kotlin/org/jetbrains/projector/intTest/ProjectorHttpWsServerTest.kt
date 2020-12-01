@@ -36,7 +36,9 @@ import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
 import org.java_websocket.WebSocket
+import org.jetbrains.projector.common.protocol.toClient.ClientAddress
 import org.jetbrains.projector.common.protocol.toClient.MainWindow
+import org.jetbrains.projector.common.protocol.toClient.toClientAddressList
 import org.jetbrains.projector.common.protocol.toClient.toMainWindowList
 import org.jetbrains.projector.server.core.ProjectorHttpWsServer
 import java.io.File
@@ -78,6 +80,21 @@ class ProjectorHttpWsServerTest {
           pngBase64Icon = "png base 64",
         )
       )
+
+      override fun getClientList(): List<ClientAddress> = listOf(
+        ClientAddress(
+          hostName = "localhost",
+          address = "127.0.0.1",
+        )
+      )
+
+      override fun disconnectAll(): String {
+        return "SUCCESS"
+      }
+
+      override fun disconnectByIp(ip: String): String {
+        return "SUCCESS"
+      }
     }
   }
 
@@ -166,6 +183,36 @@ class ProjectorHttpWsServerTest {
         println("$path OK")
       }
     }
+
+    client.close()
+    server.stop()
+  }
+
+  @Test
+  fun testClientList() {
+    val server = createServer().also { it.start() }
+    val client = HttpClient()
+
+    val response = runBlocking { client.get<String>(prj("/clientList")) }.toClientAddressList()
+
+    assertEquals(1, response.size)
+    assertEquals("localhost", response[0].hostName)
+    assertEquals("127.0.0.1", response[0].address)
+
+    client.close()
+    server.stop()
+  }
+
+  @Test
+  fun testDisconnecting() {
+    val server = createServer().also { it.start() }
+    val client = HttpClient()
+
+    var response = runBlocking { client.get<String>(prj("/disconnectByIp?ip=127.0.0.1")) }
+    assertEquals("SUCCESS", response)
+
+    response = runBlocking { client.get<String>(prj("/disconnectAll")) }
+    assertEquals("SUCCESS", response)
 
     client.close()
     server.stop()

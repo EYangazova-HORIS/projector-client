@@ -126,17 +126,29 @@ dependencies {
   implementation(project(":projector-util-logging"))
   implementation("org.javassist:javassist:$javassistVersion")
   api("org.java-websocket:Java-WebSocket:$javaWebSocketVersion")
+  implementation("org.slf4j:slf4j-nop:1.7.25")
 
   // todo: remove these dependencies: they should be exported from projector-common but now it seems not working
   testImplementation(kotlin("test", kotlinVersion))
   testImplementation(kotlin("test-junit", kotlinVersion))
 
-  intTestImplementation("com.codeborne:selenide:$selenideVersion")
+  intTestImplementation("com.codeborne:selenide:$selenideVersion") {
+    exclude("org.slf4j", "slf4j-api")
+  }
+
   intTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-  intTestImplementation("io.ktor:ktor-server-core:$ktorVersion")
-  intTestImplementation("io.ktor:ktor-server-netty:$ktorVersion")
-  intTestImplementation("io.ktor:ktor-websockets:$ktorVersion")
-  intTestImplementation("io.ktor:ktor-client-cio:$ktorVersion")
+  intTestImplementation("io.ktor:ktor-server-core:$ktorVersion") {
+    exclude("org.slf4j", "slf4j-api")
+  }
+  intTestImplementation("io.ktor:ktor-server-netty:$ktorVersion") {
+    exclude("org.slf4j", "slf4j-api")
+  }
+  intTestImplementation("io.ktor:ktor-websockets:$ktorVersion") {
+    exclude("org.slf4j", "slf4j-api")
+  }
+  intTestImplementation("io.ktor:ktor-client-cio:$ktorVersion") {
+    exclude("org.slf4j", "slf4j-api")
+  }
 
   // todo: remove these dependencies: they should be exported from projector-common but now it seems not working
   intTestImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
